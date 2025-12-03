@@ -17,7 +17,7 @@ public:
     Queue(const Queue& Q);
     bool empty();
     Queue& operator =(const Queue& Q);
-    const T& start();
+    const T& start() const;
     const size_t length();
     void pop();
     void push(const T& x);
@@ -80,7 +80,7 @@ Queue<T>::Queue(const Queue& Q) : end(nullptr), node_counter(0) {
 
 template <typename T>
 inline bool Queue<T>::empty(){
-    return node_counter = 0;
+    return node_counter == 0;
 }
 
 template <typename T>
@@ -123,7 +123,7 @@ Queue<T>& Queue<T>::operator=(const Queue& Q) {
 }
 
 template <typename T>
-inline const T& Queue<T>::start(){
+inline const T& Queue<T>::start() const{
     if (end != nullptr) return end->sig->elem;
 }
 
