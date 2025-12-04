@@ -15,10 +15,10 @@ public:
     Queue();
     ~Queue();
     Queue(const Queue& Q);
-    bool empty();
+    bool empty() const;
     Queue& operator =(const Queue& Q);
-    const T& start() const;
-    const size_t length();
+    const T* start() const;
+    size_t length() const;
     void pop();
     void push(const T& x);
     
@@ -40,7 +40,7 @@ Queue<T>::Queue(){
 
 template <typename T>
 Queue<T>::~Queue(){
-    if (end != nullptr) // si la cola no está vacía || Alternativa: node_counter != 0
+    if (end != nullptr) // si la cola no está vacía
     {
         node* primero = end->sig; // guardamos el primer elemento para poder acceder después
         end->sig = nullptr; // con esto rompemos el círculo, y ahora podemos borrar
@@ -60,33 +60,35 @@ Queue<T>::Queue(const Queue& Q) : end(nullptr), node_counter(0) {
     if (Q.end != nullptr) {  // si la cola Q no está vacía
         // copiar el primer nodo
         node* primero_Q = Q.end->sig;  // primer nodo de Q
-        end = new node(primero_Q->elem, nullptr);  // crear primer nodo de la copia
-        node* ultimo = end;  // para ir enlazando
+        node* primero = new node(primero_Q->elem, nullptr);  // crear primer nodo de la copia
+        node* ultimo = primero;  // para ir enlazando
         
-        // copiar el resto de nodos
-        node* actual_Q = primero_Q->sig;  // Ssgundo nodo de Q
-        while (actual_Q != primero_Q) {  // hasta volver al primero
+        // copiar el resto de nodos (desde el segundo hasta el último incluido)
+        node* actual_Q = primero_Q->sig;  // segundo nodo de Q
+        while (actual_Q != primero_Q) {  // recorrer hasta volver al primero
             ultimo->sig = new node(actual_Q->elem, nullptr);
             ultimo = ultimo->sig;
             actual_Q = actual_Q->sig;
         }
         
-        // cerrar el círculo
-        ultimo->sig = end;
+        // cerrar el círculo: el último apunta al primero
+        ultimo->sig = primero;
+        // end apunta al último nodo
+        end = ultimo;
         
         node_counter = Q.node_counter;
     }
 }
 
 template <typename T>
-inline bool Queue<T>::empty(){
+inline bool Queue<T>::empty() const{
     return node_counter == 0;
 }
 
 template <typename T>
 Queue<T>& Queue<T>::operator=(const Queue& Q) {
-    if (this != &Q) {  // autoasignación
-        // destruir la cola donde copiamos
+    if (this != &Q) {  // evitar autoasignación
+        // destruir la cola actual
         if (end != nullptr) {
             node* primero = end->sig;
             end->sig = nullptr;  // romper el círculo
@@ -98,23 +100,27 @@ Queue<T>& Queue<T>::operator=(const Queue& Q) {
             }
         }
         
-        // copiar desde Q
+        // resetear
         end = nullptr;
         node_counter = 0;
         
+        // copiar desde Q
         if (Q.end != nullptr) {
             // copiar el primer elemento
             node* primero_Q = Q.end->sig;
-            end = new node(primero_Q->elem);
-            node* ultimo = end;
+            node* primero = new node(primero_Q->elem, nullptr);
+            node* ultimo = primero;
             
-            // copiar el resto
+            // copiar el resto (desde el segundo hasta el último incluido)
             for (node* p = primero_Q->sig; p != primero_Q; p = p->sig) {
-                ultimo = ultimo->sig = new node(p->elem);
+                ultimo->sig = new node(p->elem, nullptr);
+                ultimo = ultimo->sig;
             }
             
-            // cerrar
-            ultimo->sig = end;
+            // cerrar el círculo: el último apunta al primero
+            ultimo->sig = primero;
+            // end apunta al último nodo
+            end = ultimo;
             
             node_counter = Q.node_counter;
         }
@@ -123,18 +129,21 @@ Queue<T>& Queue<T>::operator=(const Queue& Q) {
 }
 
 template <typename T>
-inline const T& Queue<T>::start() const{
-    if (end != nullptr) return end->sig->elem;
+inline const T* Queue<T>::start() const{
+    if (end != nullptr){
+        return &(end->sig->elem);
+    }
+    return nullptr;
 }
 
 template <typename T>
-inline const size_t Queue<T>::length(){
+inline size_t Queue<T>::length() const{
     return node_counter;
 }
 
 template <typename T>
 void Queue<T>::pop(){
-    if (end != nullptr){ // no esta vacia
+    if (end != nullptr){ // no está vacía
         if (end->sig == end){ // queda solo un nodo
             delete end;
             end = nullptr;
@@ -150,16 +159,13 @@ void Queue<T>::pop(){
 
 template <typename T>
 void Queue<T>::push(const T& x){
-    if (end == nullptr){ // si la cola esta vacia
+    if (end == nullptr){ // si la cola está vacía
         end = new node(x);
-        end->sig = end; // apunta a si mismo
+        end->sig = end; // apunta a sí mismo
     }else{
         node* nuevo = new node(x, end->sig);
         end->sig = nuevo; // unimos
-        end = nuevo; // ahora este es el ultimo
+        end = nuevo; // ahora este es el último
     }
     ++node_counter;
 }
-
-
-
